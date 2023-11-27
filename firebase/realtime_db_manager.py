@@ -28,7 +28,7 @@ class RealtimeDBManager:
         ref = db.reference(path)
         return ref.get()
 
-# # Firebase Admin SDK 초기화 및 FirebaseManager 인스턴스 생성
+# 예시 사용
 # credentials_path = 'path/to/your/firebase/credentials.json'
 # database_url = 'https://your-firebase-project-id.firebaseio.com'
 # firebase_manager = FirebaseManager(credentials_path, database_url)
