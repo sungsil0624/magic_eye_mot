@@ -13,3 +13,9 @@ class StorageManager:
         bucket = storage.bucket()
         blob = bucket.blob(remote_file_path)
         blob.upload_from_filename(local_file_path)
+
+    def upload_image(self, local_file_path, remote_file_path):
+        # 사진 업로드
+        bucket = storage.bucket()
+        blob = bucket.blob(remote_file_path)
+        blob.upload_from_filename(local_file_path)
