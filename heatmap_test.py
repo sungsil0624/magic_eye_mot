@@ -18,6 +18,7 @@ heatmap_image = heatmap_generator.generate_heatmap()
 
 # 새로운 배경 이미지 불러오기
 background_image = cv2.imread("assets/people.jpg")
+background_image = cv2.imread("json/magiceye_key.json")
 
 # 히트맵 이미지와 배경 이미지 합치기
 heatmap_with_background = cv2.addWeighted(heatmap_image, 0.7, background_image, 0.3, 0)

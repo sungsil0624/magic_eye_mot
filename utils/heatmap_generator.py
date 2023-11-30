@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 
 
+## 단위시간 별로(1분?) x,y 을 인자로 받아서 db에 바로 저장하고 누적된 값을 바탕으로 히트맵을 만들어서 storage 이미지로 저장하도록 수정해야함
+
 class HeatmapGenerator:
     def __init__(self, width, height):
         self.width = width
