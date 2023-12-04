@@ -1,6 +1,8 @@
 import numpy as np
 import supervision as sv
 from ultralytics import YOLO
+from deepface import DeepFace
+import cv2
 
 model = YOLO("yolov8n.pt")
 tracker = sv.ByteTrack()
@@ -64,6 +66,21 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
         duration_seconds = duration_frames / frame_rate
         print(f"Object #{tracker_id} stayed for {duration_seconds:.2f} seconds.")
 
+    # 얼굴 인식 부분 추가
+    img_with_faces = frame.copy()
+    for (x, y, x2, y2) in detections.xyxy:
+        face_crop = frame[int(y):int(y2), int(x):int(x2)]
+        # 얼굴 인식
+        try:
+            result = DeepFace.analyze(face_crop, actions=['age', 'gender'])
+            age = result[0]["age"]
+            gender = result[0]["gender"]
+            # 얼굴 정보 출력
+            cv2.putText(img_with_faces, f"Age: {age}, Gender: {gender}", (int(x), int(y) - 10),
+                        cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
+        except:
+            pass
+
     # 콘솔에 프레임 별 사람 수 출력
     print(f"Frame {frame_index}: People Count - {people_count}")
 
@@ -75,7 +92,7 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
 
     # annotate
     annotated_frame = box_annotator.annotate(
-        scene=frame.copy(),
+        scene=img_with_faces,
         detections=detections,
         labels=labels
     )
