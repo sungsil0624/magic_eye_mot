@@ -21,28 +21,48 @@ box_annotator = sv.BoxAnnotator(
     text_thickness=1,
     text_scale=0.5
 )
-# label_annotator = sv.LabelAnnotator()
 trace_annotator = sv.TraceAnnotator()
 
-# 프레임 별 사람 수 출력 예시
-# 우선 로컬 영상에서 적용
+# 객체 체류시간을 저장할 딕셔너리 초기화
+stay_duration = {}
+
+# 프레임 레이트
+frame_rate = 24.0
+
 
 def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
     results = model(frame, tracker="botsort.yaml")[0]
 
     # detect
     detections = sv.Detections.from_ultralytics(results)
-    detections = detections[detections.class_id == 0] # person만 detect
+    detections = detections[detections.class_id == 0]  # person만 detect
     detections = tracker.update_with_detections(detections)
 
     people_count = sum(1 for class_id in detections.class_id)
 
-    ## 감지된 객체의 x,y 값 뽑아내기
-    ## 사람만 감지될 수 있도록 코드도 변경해야할듯
-    # for bbox in detections.xyxy:
-    #     x_center = (bbox[0] + bbox[2]) / 2
-    #     y_center = (bbox[1] + bbox[3]) / 2
-    #     print(f"객체 - x: {x_center}, y: {y_center}")
+    # 이전 프레임의 객체 ID
+    previous_ids = set(stay_duration.keys())
+
+    # 현재 프레임의 객체 ID
+    current_ids = set(detections.tracker_id)
+
+    # 등장한 객체 ID 기록
+    new_appearances = current_ids - previous_ids
+
+    # 사라진 객체 ID 기록
+    disappeared_objects = previous_ids - current_ids
+
+    # 등장한 객체에 대해서 현재 프레임 인덱스 기록
+    for tracker_id in new_appearances:
+        stay_duration[tracker_id] = frame_index
+
+    # 사라진 객체에 대해서 체류시간 계산 및 출력
+    for tracker_id in disappeared_objects:
+        start_frame = stay_duration.pop(tracker_id)
+        end_frame = frame_index
+        duration_frames = end_frame - start_frame
+        duration_seconds = duration_frames / frame_rate
+        print(f"Object #{tracker_id} stayed for {duration_seconds:.2f} seconds.")
 
     # 콘솔에 프레임 별 사람 수 출력
     print(f"Frame {frame_index}: People Count - {people_count}")
@@ -59,8 +79,6 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
         detections=detections,
         labels=labels
     )
-    # annotated_frame = label_annotator.annotate(
-    #     annotated_frame, detections=detections, labels=labels)
     line_counter.trigger(detections=detections)
     line_annotator.annotate(frame=annotated_frame, line_counter=line_counter)
 
@@ -69,7 +87,7 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
 
 
 sv.process_video(
-    source_path="assets/people-walking.mp4",
+    source_path="assets/example1.mp4",
     target_path="result.mp4",
     callback=callback
 )
