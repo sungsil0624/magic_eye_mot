@@ -28,6 +28,9 @@ trace_annotator = sv.TraceAnnotator()
 # 객체 체류시간을 저장할 딕셔너리 초기화
 stay_duration = {}
 
+# 얼굴 정보를 저장할 딕셔너리 초기화
+faces_info = {}
+
 # 프레임 레이트
 frame_rate = 24.0
 
@@ -68,18 +71,24 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
 
     # 얼굴 인식 부분 추가
     img_with_faces = frame.copy()
-    for (x, y, x2, y2) in detections.xyxy:
-        face_crop = frame[int(y):int(y2), int(x):int(x2)]
-        # 얼굴 인식
-        try:
-            result = DeepFace.analyze(face_crop, actions=['age', 'gender'])
-            age = result[0]["age"]
-            gender = result[0]["gender"]
-            # 얼굴 정보 출력
-            cv2.putText(img_with_faces, f"Age: {age}, Gender: {gender}", (int(x), int(y) - 10),
+    for (x, y, x2, y2), tracker_id in zip(detections.xyxy, detections.tracker_id):
+        # 얼굴 정보를 이미 저장한 객체인지 확인
+        if tracker_id not in faces_info:
+            face_crop = frame[int(y):int(y2), int(x):int(x2)]
+            # 얼굴 인식
+            try:
+                result = DeepFace.analyze(face_crop, actions=['age', 'gender'])
+                age = result[0]["age"]
+                gender = result[0]["gender"]
+                # 얼굴 정보 저장
+                faces_info[tracker_id] = f"Age: {age}, Gender: {gender}"
+            except:
+                pass
+
+        # 얼굴 정보 표시
+        if tracker_id in faces_info:
+            cv2.putText(img_with_faces, faces_info[tracker_id], (int(x), int(y) - 50),
                         cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
-        except:
-            pass
 
     # 콘솔에 프레임 별 사람 수 출력
     print(f"Frame {frame_index}: People Count - {people_count}")
