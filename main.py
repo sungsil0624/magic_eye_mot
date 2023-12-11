@@ -39,6 +39,7 @@ frame_rate = 24.0
 rtsp_url = "rtsp://admin:1q2w3e4r!@192.9.200.142:554/ch04/0"
 rtsp_capture = RTSPVideoCapture(rtsp_url)
 
+
 try:
     while True:
         frame = rtsp_capture.read_frame()
@@ -53,6 +54,24 @@ try:
                 detections = sv.Detections.from_ultralytics(results)
                 detections = detections[detections.class_id == 0]  # person만 detect
                 detections = tracker.update_with_detections(detections)
+
+                # 객체 등장 여부 확인 및 체류 시간 기록
+                for (_, _, _, _), tracker_id in zip(detections.xyxy, detections.tracker_id):
+                    current_time = time.time()
+
+                    # 객체 등장
+                    if tracker_id not in stay_duration:
+                        stay_duration[tracker_id] = current_time
+
+                    # 객체 사라짐
+                    else:
+                        duration = current_time - stay_duration[tracker_id]
+
+                        # 여기서 duration을 사용하여 필요한 처리 수행
+
+                        print("체류 시간 : " + str(duration))
+                        # 등장 시간 초기화
+                        stay_duration.pop(tracker_id)
 
                 people_count = sum(1 for class_id in detections.class_id)
 
