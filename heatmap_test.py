@@ -1,7 +1,7 @@
 import supervision as sv
 import cv2
 import numpy as np
-import for_webcam as forw
+from utils import for_webcam as forw
 import os
 from datetime import datetime, timedelta
 from supervision import get_video_frames_generator
@@ -61,6 +61,7 @@ def callback(frame: np.ndarray, frame_index: int) -> np.ndarray:
     if elapsed_time >= save_interval_seconds:
         forw.save_screenshot(annotated_frame, current_time)
         last_save_time = current_time
+        heatmap_annotator.heat_mask = None
 
     return annotated_frame
 
